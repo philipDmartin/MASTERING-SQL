@@ -44,3 +44,20 @@ INSERT INTO oilchangelogs(vehicle_id, date_occured)
 END
 $$;
 
+CREATE PROCEDURE return_sold_vehicle_to_inventory(in vehicleId int)
+LANGUAGE plpgsql
+AS $$
+Begin
+-- update vehicles is_sold to false
+UPDATE vehicles v
+SET is_sold = false
+WHERE v.vehicle_id = vehicleId;
+-- update sale returned to true
+UPDATE sales s
+SET sale_returned = true
+WHERE s.vehicle_id = vehicleId;
+-- insert into oil change log
+INSERT INTO oilchangelogs(vehicle_id, date_occured)
+	VALUES(vehicleId, current_date);
+END
+$$;
