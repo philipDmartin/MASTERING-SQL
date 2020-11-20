@@ -1,0 +1,74 @@
+--"Returning dealership_id" bringing the dealership_id value back and assigning it to "NewDealerShipId"
+do $$
+DECLARE
+	NewDealerShipId integer;
+	NewEmployee1 integer;
+	NewEmployee2 integer;
+	NewEmployee3 integer;
+	SmId integer;
+	GmId integer;
+	CsId integer;
+	NelsonAutosId integer;
+	CainAutosId integer;
+	BEGIN
+	INSERT INTO 
+		dealerships(
+			business_name,
+			phone,
+			city,
+			state,
+			website,
+			tax_id
+		)
+		VALUES
+		(
+			'Felphun Automotive',
+			'615-867-5309',
+			'Washington',
+			'District of Columbia',
+			'http://www.www.com',
+			'so-749-iz-2m07'
+		) 
+		RETURNING dealership_id INTO NewDealerShipId;
+		COMMIT;
+		SELECT employee_type_id FROM employeetypes WHERE name = 'Sales Manager' INTO SmId; 
+	    SELECT employee_type_id FROM employeetypes WHERE name = 'General Manager' INTO GmId; 
+		SELECT employee_type_id FROM employeetypes WHERE name = 'Customer Service' INTO CsId;
+-- 2nd Bullet Point 
+-- 1) Hire your employees
+-- 2) Insert them into the dealership employees table
+-- NewDealershipId is created above when we created the dealership
+-- adding all of the employees
+-- employee_type_id is a new variable that we created up top. 
+-- that new variable gets it's new value from the select statement above
+-- returning the employee_id of each new employee and storing that value into a variable that is declared up top
+--1)
+		INSERT INTO employees
+			(first_name, last_name, email_address, phone, employee_type_id)
+			VALUES ('Don', 'John', 'dontshoot@gmail.com', '666-666-6666', SmId )
+			RETURNING employee_id INTO NewEmployee1;
+		INSERT INTO employees
+			(first_name, last_name, email_address, phone, employee_type_id)
+			VALUES ('Francois', 'Frankenson', 'shoot@gmail.com', '616-666-6666', GmId )
+			RETURNING employee_id INTO NewEmployee2;
+		INSERT INTO employees
+  			(first_name, last_name, email_address, phone, employee_type_id)
+			VALUES ('Ron', 'Yahn', 'donttoot@gmail.com', '666-626-6666', CsId )
+			RETURNING employee_id INTO NewEmployee3;
+		COMMIT;
+--2)
+		INSERT INTO dealershipEmployees
+			(dealership_id, employee_id)
+			VALUES (NewDealershipId, NewEmployee1), 
+				   (NewDealershipId, NewEmployee2),
+				   (NewDealershipId, NewEmployee3);
+		    COMMIT;
+-- Third Bullet Point
+-- Getting the dealership_ids and setting them into variables
+-- Updating based on these things
+		SELECT dealership_id FROM dealerships WHERE business_name = 'Nelson Autos of Illinois' INTO NelsonAutosId;
+		SELECT dealership_id FROM dealerships WHERE business_name = 'Cain Autos of Missouri' INTO CainAutosId;
+		UPDATE dealershipemployees SET dealership_id = CainAutosId WHERE dealership_id = NelsonAutosId;
+		COMMIT;
+END;
+$$ language plpgsql;
