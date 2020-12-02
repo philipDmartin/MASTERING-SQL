@@ -1,0 +1,62 @@
+do $$ 
+DECLARE
+VehicleMakeId = (SELECT vehicle_make_id FROM vehiclemake WHERE name = 'Honda');
+VehicleModelId int;
+VehicleBodyTypeId int;
+VehicleTypeId int;
+BEGIN
+	INSERT INTO
+		vehiclemodel (name)
+	VALUES ('Cr-V') RETURNING vehicle_model_id INTO VehicleModelId;
+COMMIT;
+	INSERT INTO 
+		vehiclebodytype (name)
+	VALUES ('Crossover') RETURNING vehicle_body_type_id INTO VehicleBodyTypeId;
+COMMIT;
+	INSERT INTO 
+		vehicletypes (vehicle_body_type_id, vehicle_make_id, vehicle_model_id)
+	VALUES (VehicleBodyTypeId, VehicleMakeId, VehicleModelId) RETURNING vehicle_type_id INTO VehicleTypeId;
+COMMIT;
+INSERT INTO vehicles(
+	 vin, engine_type, vehicle_type_id, exterior_color, interior_color, floor_price, msr_price, miles_count, year_of_car, is_sold, is_new, dealership_location_id)
+	VALUES 
+	( '1N6AD0CU6FN889171', 'I4', VehicleTypeId, 'Lilac', 'beige', 21755, 18999, 100, 2020, false, true, 2),
+	( '1N6AD0CU6FN889151', 'I4', VehicleTypeId, 'Dark Red', 'beige', 21755, 18999, 100, 2020, false, true, 2),
+	( '1N6AD0CU6FN889111', 'I4', VehicleTypeId, 'Lime', 'beige', 21755, 18999, 100, 2020, false, true, 2),
+	( '1N6AD0CU6FN889178', 'I4', VehicleTypeId, 'Navy', 'beige', 21755, 18999, 100, 2020, false, true, 2),
+	( '1N6AD0CU6FN889121', 'I4', VehicleTypeId, 'Sand', 'beige', 21755, 18999, 100, 2020, false, true, 2);
+  COMMIT;
+ End;
+ $$ language plpgsql;
+
+ CREATE FUNCTION adjust_pickup_date()
+  RETURNS TRIGGER
+  LANGUAGE PlPGSQL
+AS $$
+BEGIN
+	UPDATE sales
+	SET pickup_date = (
+		CASE
+			WHEN NEW.pickup_date <= NEW.purchase_date THEN NEW.purchase_date + integer '7'
+			WHEN NEW.pickup_date > NEW.purchase_date AND NEW.pickup_date < NEW.purchase_date + integer '7' THEN NEW.pickup_date + integer '4'
+			ELSE NEW.purchase_date + integer '7'
+		END
+		)
+	WHERE sale_id = NEW.sale_id;
+	RETURN NULL;
+END
+$$;
+CREATE TRIGGER sale_updated
+ 	AFTER UPDATE OF purchase_date
+	ON sales
+	FOR EACH ROW
+	EXECUTE PROCEDURE adjust_pickup_date();
+
+	CREATE PROCEDURE insert_data(IN a varchar, IN b varchar, IN c varchar, IN d varchar, IN e int)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+INSERT INTO employees(first_name, last_name, email, phone, employee_type_id)
+    VALUES (a, b, c, d, e);
+END
+$$;
