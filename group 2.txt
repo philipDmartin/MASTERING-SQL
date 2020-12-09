@@ -1,0 +1,29 @@
+CREATE MATERIALIZED VIEW car_details_v2 AS
+	SELECT v.*, ma.name make, mo.name model, b.name body_type
+	FROM vehicles v
+	JOIN vehicletypes vt ON v.vehicle_type_id = vt.vehicle_type_id
+	JOIN bodytypes b ON b.body_type_id = vt.body_type_id
+	JOIN make ma ON ma.vehicle_make_id = vt.vehicle_make_id
+	JOIN model mo on mo.vehicle_model_id = vt.vehicle_model_id
+	WHERE ma.name in ('Nissan', 'Honda', 'BMW', 'Acura') AND v.dealership_location_id IN (1, 2, 4, 8, 10, 12, 15, 31, 46);
+	
+SELECT *
+FROM car_details;
+CREATE INDEX index_car_details ON car_details_v2
+(make, dealership_location_id);
+explain SELECT make
+FROM car_details_v2
+WHERE make in ('Nissan', 'Honda', 'BMW', 'Acura') AND dealership_location_id IN (1, 2, 4, 8, 10, 12, 15, 31, 46);
+explain SELECT ma.name
+	FROM vehicles v
+	JOIN vehicletypes vt ON v.vehicle_type_id = vt.vehicle_type_id
+	JOIN bodytypes b ON b.body_type_id = vt.body_type_id
+	JOIN make ma ON ma.vehicle_make_id = vt.vehicle_make_id
+	JOIN model mo on mo.vehicle_model_id = vt.vehicle_model_id
+	WHERE ma.name in ('Nissan', 'Honda', 'BMW', 'Acura') AND v.dealership_location_id IN (1, 2, 4, 8, 10, 12, 15, 31, 46);
+select st.name sales_type_name, c.first_name, c.last_name, s.deposit, s.purchase_date
+from sales s
+join vehicles v on v.vehicle_id = s.vehicle_id
+join customers c on c.customer_id = s.customer_id
+join dealerships d on d.dealership_id = s.dealership_id
+join salestypes st on st.sales_type_id = s.sales_type_id;
