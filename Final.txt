@@ -1,0 +1,175 @@
+-- do $$ 
+-- DECLARE 
+--   Do I need any?
+-- BEGIN
+--  In order to remove the table, employeetypes (and re-enter the data to the employee table)...
+-- 	DROP VIEW employee_total_types;
+--  ALTER TABLE employees
+-- 	DROP CONSTRAINT employees_employee_type_id_fkey;
+-- 	ALTER TABLE employees
+-- 	ALTER COLUMN employee_type_id TYPE varchar USING
+-- 		employee_type_id::varchar;
+-- 	ALTER TABLE employees
+-- 	RENAME COLUMN employee_type_id TO employee_type;
+-- 	UPDATE employees 
+-- 		SET employee_type = CASE  
+-- 					WHEN employee_type = '1' THEN 'Sales'
+-- 					WHEN employee_type = '2' THEN 'Finance Manager'
+-- 					WHEN employee_type = '3' THEN 'Sales Manager'
+-- 					WHEN employee_type = '4' THEN 'Customer Service'
+-- 					WHEN employee_type = '5' THEN 'Business Development'
+-- 					WHEN employee_type = '6' THEN 'General Manager'
+-- 					WHEN employee_type = '7' THEN 'Porter'
+-- 					ELSE null
+--                  END ;
+-- 	DROP TABLE employeetypes;
+--  Redundant table, the data is already on the carrepairtypelogs table
+-- 	DROP TABLE oilchangelogs;
+-- COMMIT;
+--  Making some views
+-- 	DROP VIEW sales2018;
+-- 	DROP VIEW average_price_by_state;
+--  To drop the salestypes table, and re-enter the data to the sales table....
+-- 	ALTER TABLE sales
+-- 		DROP CONSTRAINT sales_sales_type_id_fkey;
+-- 	ALTER TABLE sales
+-- 		ALTER COLUMN sales_type_id TYPE varchar USING
+-- 			sales_type_id::varchar;
+-- 	ALTER TABLE sales
+-- 		RENAME COLUMN sales_type_id TO sales_type;
+-- 	UPDATE sales 
+-- 		SET sales_type = CASE  
+-- 			WHEN sales_type = '1' THEN 'Purchase'
+-- 			WHEN sales_type = '2' THEN 'Lease'
+-- 			ELSE null
+--          END ;
+-- 	DROP TABLE salestypes;
+-- COMMIT;
+--  Dropping the views attached to the vehicle types...
+-- 	DROP VIEW vehicle_body_make_model;
+-- 	DROP VIEW vehicle_stock_by_body;
+-- 	DROP VIEW vehicle_stock_by_make;
+-- 	DROP VIEW vehicle_stock_by_model;
+--  Drop the vehicle_make, vehicle_model, vehicle_body_types tables, in order to re-enter the data to the vehicle_types table...
+-- 	ALTER TABLE vehicletypes
+-- 		DROP CONSTRAINT vehicletypes_vehicle_body_type_id,
+-- 		DROP CONSTRAINT vehicletypes_vehicle_make_id,
+-- 		DROP CONSTRAINT vehicletypes_vehicle_model_id;
+-- 	ALTER TABLE vehicletypes
+-- 		ALTER COLUMN vehicle_body_type_id TYPE varchar USING
+-- 			vehicle_body_type_id::varchar,
+-- 		ALTER COLUMN vehicle_make_id TYPE varchar USING
+-- 			vehicle_make_id::varchar,
+-- 		ALTER COLUMN vehicle_model_id TYPE varchar USING
+-- 			vehicle_model_id::varchar;
+-- 	ALTER TABLE vehicletypes
+-- 		RENAME COLUMN vehicle_body_type_id TO vehicle_body_type;
+-- 	ALTER TABLE vehicletypes
+-- 		RENAME COLUMN vehicle_make_id TO vehicle_make;
+-- 	ALTER TABLE vehicletypes
+-- 		RENAME COLUMN vehicle_model_id TO vehicle_model;
+--  Data migration things/stuff....
+-- UPDATE vehicletypes 
+-- SET vehicle_body_type =  CASE  
+-- 					WHEN vehicle_body_type = '1' THEN 'Car' 
+-- 					WHEN vehicle_body_type = '2' THEN 'Truck'
+-- 					WHEN vehicle_body_type = '3' THEN 'Van'
+-- 					WHEN vehicle_body_type = '4' THEN 'SUV'
+-- 					WHEN vehicle_body_type = '5' THEN 'CUV'
+-- 					ELSE null
+--                  END ;
+-- UPDATE vehicleTypes 				 
+-- SET vehicle_make = CASE  
+-- 					WHEN vehicle_make = '1' THEN 'Chevrolet' 
+-- 					WHEN vehicle_make = '2' THEN 'Mazda'
+-- 					WHEN vehicle_make = '3' THEN 'Nissan'
+-- 					WHEN vehicle_make = '4' THEN 'Ford'
+-- 					WHEN vehicle_make = '5' THEN 'Volkswagen'
+-- 					WHEN vehicle_make = '6' THEN 'Jaguar'
+-- 					WHEN vehicle_make = '7' THEN 'Honda'
+-- 					ELSE null
+-- 				  END ;
+-- UPDATE vehicleTypes 
+-- SET vehicle_model =  CASE  
+-- 					WHEN vehicle_model = '1' THEN 'Corvette' 
+-- 					WHEN vehicle_model = '2' THEN 'Blazer'
+-- 					WHEN vehicle_model = '3' THEN 'Silverado'
+-- 					WHEN vehicle_model = '4' THEN 'MX-5 Miata'
+-- 					WHEN vehicle_model = '5' THEN 'CX-5'
+-- 					WHEN vehicle_model = '6' THEN 'CX-9' 
+-- 					WHEN vehicle_model = '7' THEN 'Maxima'
+-- 					WHEN vehicle_model = '8' THEN 'Altima'
+-- 					WHEN vehicle_model = '9' THEN 'Titan'
+-- 					WHEN vehicle_model = '10' THEN 'Fusion'
+-- 					WHEN vehicle_model = '11' THEN 'EcoSport'
+-- 					WHEN vehicle_model = '12' THEN 'F-250'
+-- 					WHEN vehicle_model = '13' THEN 'Beetle'
+-- 					WHEN vehicle_model = '14' THEN 'Passat'
+-- 					WHEN vehicle_model = '15' THEN 'Atlas'
+-- 					WHEN vehicle_model = '16' THEN 'Transit-150 Cargo'
+-- 					WHEN vehicle_model = '17' THEN 'Eagle'
+-- 					WHEN vehicle_model = '18' THEN 'CR-V'
+-- 					ELSE null
+-- 				 END ;
+-- 	DROP TABLE vehiclemake;
+-- 	DROP TABLE vehiclemodel;
+-- 	DROP TABLE vehiclebodytype;
+-- COMMIT;
+--  Creating an employee_audits table to track employee data changes...
+-- Drop table if exists employee_audits;
+-- CREATE TABLE employee_audits (
+--    id INT GENERATED ALWAYS AS IDENTITY,
+--    employee_id INT NOT NULL,
+--    last_name VARCHAR(40) NOT NULL,
+--    email_address VARCHAR(40),
+--    phone VARCHAR(40) NOT NULL,
+--    changed_on TIMESTAMP(6) NOT NULL
+-- );
+-- CREATE OR REPLACE FUNCTION log_employee_detail_changes()
+--   RETURNS TRIGGER 
+--   LANGUAGE PLPGSQL
+--   AS
+-- $$
+-- BEGIN
+-- 	IF NEW.last_name <> OLD.last_name
+-- 	OR NEW.email_address <> OLD.email_address
+-- 	OR NEW.phone <> OLD.phone
+-- 	THEN
+-- 		 INSERT INTO employee_audits(employee_id,last_name,email_address,phone,changed_on)
+-- 		 VALUES(OLD.employee_id,OLD.last_name,OLD.email_address,OLD.phone,now());
+-- 	END IF;
+-- 	RETURN NEW;
+-- END;
+-- $$
+-- CREATE TRIGGER log_employee_detail_changes
+--   BEFORE UPDATE
+--   ON employees
+--   FOR EACH ROW
+--   EXECUTE PROCEDURE log_employee_detail_changes();
+--  Making a vehicle view...
+-- CREATE VIEW full_vehicle_info AS
+-- 	SELECT
+-- 		v.vehicle_id,
+-- 		v.vin,
+-- 		v.engine_type,
+-- 		v.exterior_color,
+-- 		v.interior_color,
+-- 		v.floor_price,
+-- 		v.msr_price,
+-- 		v.miles_count,
+-- 		v.year_of_car,
+-- 		v.is_sold,
+-- 		v.is_new,
+-- 		vt.vehicle_make AS "Make",
+-- 		vt.vehicle_model AS "Model",
+-- 		vt.vehicle_body_type AS "Body Type",
+-- 		d.business_name "Dealership"
+-- 	FROM vehicles v
+-- 	JOIN vehicletypes vt ON vt.vehicle_type_id = v.vehicle_type_id
+-- 	JOIN dealerships d ON d.dealership_id = v.dealership_location_id;
+-- SELECT * FROM full_vehicle_info;
+-- EXCEPTION WHEN others THEN 
+  -- RAISE INFO 'name:%', SQLERRM;
+--   ROLLBACK;
+-- END;
+-- $$ language plpgsql;
